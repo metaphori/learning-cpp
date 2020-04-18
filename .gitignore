@@ -6,3 +6,12 @@ build
 
 .kdev4
 *.kdev4
+
+# QtCreator project files (can be generated via `gradlew generateIde`)
+learning-cpp.cflags
+learning-cpp.config
+learning-cpp.creator
+learning-cpp.creator.user
+learning-cpp.cxxflags
+learning-cpp.files
+learning-cpp.includes
