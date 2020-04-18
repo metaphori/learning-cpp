@@ -8,3 +8,5 @@
  */
 
 rootProject.name = "learning-cpp"
+
+include("proj-app", "proj-lib", "proj-test")
