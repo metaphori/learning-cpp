@@ -12,9 +12,13 @@ plugins {
 
     // Apply the cpp-unit-test plugin to add support for building and running C++ test executables
     `cpp-unit-test`
+
+    //id("org.bitbucket.akornilov.cpp-build-tuner") version "0.7"
+    id("org.bitbucket.akornilov.cpp-ide-generator") version "0.5"
 }
 
 // Set the target operating system and architecture for this application
 application {
     targetMachines.add(machines.linux.x86_64)
 }
+
