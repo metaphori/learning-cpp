@@ -1,0 +1,1 @@
+./gradlew runTest --rerun-tasks
