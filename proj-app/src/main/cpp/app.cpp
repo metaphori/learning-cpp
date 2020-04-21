@@ -1,6 +1,13 @@
-#include <iostream>
-#include <memory>
-#include <string>
+#include <iostream> // for std::cout
+#include <memory> // for std::move
+#include <string> // for std::string
+#include <cassert> // for assert()
+#include <regex>
+#include <cctype> // for std::toupper
+#include <fstream>
+#include <random>
+#include <algorithm> // for std::transform
+#include <map> // for std::map
 //#include <stdlib.h>
 #include "app.h"
 #include "lib.hpp"
@@ -130,7 +137,49 @@ public:
 
     T operator[](int pos) const { return elems[pos]; }
     int size() const { return _size; }
+
+    T* begin(){ return elems; }
+    T* end(){ return elems+_size;}
 };
+
+// Function objects
+template<typename T> class Less_Than { const T val;
+public:
+        Less_Than(const T& v) : val(v) { }
+        bool operator()(const T& x) const { return x<val; } // call operator
+};
+
+// Function template
+template<typename C, typename Op>
+void for_all(C& c, Op p){
+    for(auto& x : c) p(x);
+}
+
+// Variadic template
+template <typename T> void bottom(T x) { std::cout << x << " "; }
+void recurse(){ std::cout << "Nothing more" << std::endl; } // base case function for termination of recursion
+template <typename Head, typename... Tail>
+void recurse(Head h, Tail... t) {
+    bottom(h);
+    recurse(t...);
+}
+
+struct Entry { std::string name; int value; };
+
+std::string operator""_u(const char* s, size_t size){
+    std::string str;
+    for(int i=0; i!=size; ++i) str += std::toupper(s[i]);
+    // std::transform(str.begin(), str.end(),str.begin(), ::toupper);
+    return str;
+}
+
+/*
+template<typename T> concept Arithmetic = std::is_arithmetic<T>::value;
+
+template<Sequence Seq, Number Num>
+         requires Arithmetic<Value_type<Seq>,Num>
+         Num sum(Seq s, Num n) { for(auto& v : s) n+=v; return n; };
+*/
 
 int main () {
     learning_cpp::Greeter greeter;
@@ -194,8 +243,85 @@ int main () {
 
     // Generic Vec
     Vec<int> v { 1,2,3 };
-    //for(int& x : v)
+    for_all(v, [](int& x){ ++x; }); // function template + lambda
     for(int i=0; i!=v.size(); ++i) std::cout << v[i] << ", "; std::cout << std::endl;
+    for(int& x : v) std::cout << x << ", "; std::cout << std::endl;
+
+    // FUNCTION OBJECTS
+    Less_Than<int> lt { 50 };
+    assert(lt(100) == false); // => false (100 is NOT lt 50)
+
+    recurse("abc", 1, 'a', 7.7, true);
+
+    // STRINGS
+    std::string s1 = "Niels Stroustrup";
+    std::string s2 = s1.substr(6,10);    // s2 = "Stroustrup"
+    s1.replace(0,5, "nicholas");    // s1 = "nicholas Stroustrup"
+    s1[0] = toupper(s1[0]);         // s1 = "Nicholas Stroustrup"
+    std::cout << s1 << ", " << s2 << std::endl;
+
+    // REGEXPS
+    std::regex mypattern { "\\w{2}\\s*(\\d{4})?" }; // 2 letters, some spaces, optlly 4 digits
+    std::regex p2 { R"(\d-\d)" }; // notice the raw string literal R"(...)"
+
+    std::smatch matches; // matched strings go here
+    if( std::regex_search(str, matches, mypattern) ) std::cout << "Match[0]: " << matches[0] << std::endl;
+
+    std::string someString = "hi 4000 foo ba 3333";
+    for(std::sregex_iterator p(someString.begin(), someString.end(), mypattern); p != std::sregex_iterator{}; ++p)
+        std::cout << "Regex iteration step: [0]=" << (*p)[0] // entire match
+                  << "; [1]=" << (*p)[1] // first capture
+                  << '\n';
+
+    // NUMERICAL STUFF
+    constexpr double d = 20.699;
+    std::cout.precision(5);
+    std::cout << d << ", " << std::scientific << d << ", " << std::hexfloat << d << ", "
+      << std::fixed << d << ", " << std::defaultfloat << d << std::endl;
+    // 20.7,2.0699e+01112960x1.4b2f1a9fbe76dp+4,20.6990,20.7
+
+    // STREAMS
+    std::ofstream ofs("/home/roby/Downloads/cpp_example_file");
+    if(!ofs) std::cerr << "couldn't open 'target' for writing" << std::endl;
+    else ofs << "hi there"; // Once properly opened can be used as an ordinary 'ostream'
+
+    std::ostringstream ss;
+    ss << 7 << true << "a";
+    ss.str("..." + ss.str());
+    std::cout << ss.str() << std::endl; // Output:   ...71a
+
+    std::istringstream is { "7.5" };
+    int i;
+    is >> i;
+    std::cout << "i = " << i << std::endl; // Output:  i = 7
+
+    std::ostream_iterator<std::string> osi { std::cout };
+    *osi = "hello ";
+    osi++;
+    *osi = "stream iterators :) \n";
+
+    // RANDOM GENERATION
+    std::random_device rd; // used to obtain a seed for the random number engine
+    std::mt19937 gen(rd()); //Standard mersenne_twister_engine seeded with rd()
+    std::normal_distribution<> normDis{5,2};
+    for (int n=0; n<10; ++n) std::cout << normDis(gen) << "; "; std::cout << " (nrom distrib: mean=5, stdev=2)\n";
+
+    // UDL
+    std::string udls = "bob"_u;
+    std::cout << udls << "\n";
+
+    // PAIRS
+    std::pair<int,double> pair = {1, 6.3};
+    auto pair2 = std::make_pair("hello", 777);
+    std::cout << "std::pair => " << pair2.first << ", " << pair2.second << "\n";
+
+    // STRUCTURED BINDING
+    std::map<std::string,int> m { {"roby", 123}, {"john",456} };
+    for (const auto [key,value] : m) std::cout << "{" << key << "," << value << "} --- "; std::cout << "\n";
+
+    Entry entry { "bob" , 777 };
+    auto [entryName, entryValue] = entry;
+    std::cout << entryName << " - " << entryValue << "\n";
 
     return 0;
 }
