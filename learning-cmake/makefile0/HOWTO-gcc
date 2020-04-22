@@ -1,0 +1,5 @@
+gcc -o hellomake hellomake.c hellofunc.c -I .
+
+-o is the name of the object file
+source files follow
+-I <dir> specifies the dir where to look for headers
